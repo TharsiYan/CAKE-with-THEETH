@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+.DS_Store
+server/database/cake_shop.db
+server/uploads/images/*
+!server/uploads/images/.keep
+server/uploads/videos/*
+!server/uploads/videos/.keep
