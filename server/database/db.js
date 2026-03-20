@@ -5,19 +5,31 @@ const bcrypt = require('bcryptjs');
 
 const DB_PATH = path.join(__dirname, 'cake_shop.db');
 
-// Ensure database directory exists
-const dbDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+// Check if running in Vercel environment
+const isVercel = process.env.VERCEL === '1';
+
+// In Vercel, use READONLY mode to avoid "EROFS: read-only file system" errors
+const dbMode = isVercel 
+    ? sqlite3.OPEN_READONLY 
+    : (sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE);
+
+if (!isVercel) {
+    // Ensure database directory exists only in local writable environment
+    const dbDir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dbDir)) {
+        fs.mkdirSync(dbDir, { recursive: true });
+    }
 }
 
 // Create database connection
-const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
+const db = new sqlite3.Database(DB_PATH, dbMode, (err) => {
     if (err) {
         console.error('Error opening database:', err);
     } else {
-        console.log('Connected to SQLite database at:', DB_PATH);
-        initializeDatabase();
+        console.log(`Connected to SQLite database at: ${DB_PATH} (Vercel: ${isVercel})`);
+        if (!isVercel) {
+            initializeDatabase();
+        }
     }
 });
 

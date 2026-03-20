@@ -523,13 +523,16 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: err.message || 'Something went wrong!' });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`API available at http://localhost:${PORT}/api`);
-    if (fs.existsSync(distPath)) {
-        console.log(`Website available at http://localhost:${PORT}`);
-    }
-});
+// Start server only if not in Vercel environment
+if (process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+        console.log(`API available at http://localhost:${PORT}/api`);
+        if (fs.existsSync(distPath)) {
+            console.log(`Website available at http://localhost:${PORT}`);
+        }
+    });
+}
 
+// Export for Vercel Serverless Functions
 module.exports = app;
