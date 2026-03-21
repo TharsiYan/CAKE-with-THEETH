@@ -162,12 +162,12 @@ app.post('/api/cakes/:id/comments', async (req, res) => {
         }
         
         const result = await dbAsync.run(
-            'INSERT INTO comments (cake_id, visitor_name, comment) VALUES (?, ?, ?)',
+            'INSERT INTO comments (cake_id, visitor_name, comment) VALUES (?, ?, ?) RETURNING id',
             [req.params.id, visitor_name || 'Anonymous', comment]
         );
         
         res.json({ 
-            id: result.id, 
+            id: result.rows[0].id, 
             cake_id: parseInt(req.params.id),
             visitor_name: visitor_name || 'Anonymous',
             comment,
@@ -192,8 +192,8 @@ app.post('/api/cakes/:id/rate', async (req, res) => {
         await dbAsync.run(`
             INSERT INTO ratings (cake_id, rating, visitor_ip) 
             VALUES (?, ?, ?)
-            ON CONFLICT(cake_id, visitor_ip) 
-            DO UPDATE SET rating = excluded.rating, created_at = CURRENT_TIMESTAMP
+            ON CONFLICT (cake_id, visitor_ip) 
+            DO UPDATE SET rating = EXCLUDED.rating, created_at = CURRENT_TIMESTAMP
         `, [req.params.id, rating, visitorIp]);
         
         // Get updated average
@@ -333,11 +333,12 @@ app.post('/api/admin/cakes', authenticateToken, upload.fields([
         
         const result = await dbAsync.run(
             `INSERT INTO cakes (name, weight, price, price_range, type, selling_type, description, images, video, is_available)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id`,
             [name, weight, price, price_range, type, selling_type, description, JSON.stringify(images), video, is_available ? 1 : 0]
         );
         
-        const cake = await dbAsync.get('SELECT * FROM cakes WHERE id = ?', [result.id]);
+        const insertedId = result.rows[0].id;
+        const cake = await dbAsync.get('SELECT * FROM cakes WHERE id = ?', [insertedId]);
         cake.images = JSON.parse(cake.images || '[]');
         
         res.status(201).json(cake);
