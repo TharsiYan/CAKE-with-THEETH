@@ -5,9 +5,10 @@ const bcrypt = require('bcryptjs');
 const isVercel = process.env.VERCEL === '1';
 
 // Create PostgreSQL connection pool
-// This automatically uses the POSTGRES_URL environment variable provided by Vercel
+// Flexible fallback for whatever Vercel/Neon generates
+const dbUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || process.env.NEON_URL;
 const pool = new Pool({
-    connectionString: process.env.POSTGRES_URL,
+    connectionString: dbUrl,
     ssl: {
         rejectUnauthorized: false
     }
@@ -183,8 +184,8 @@ const dbAsync = {
 };
 
 // Automatically run initialization
-// On Vercel, it connects immediately but initialization relies on process.env.POSTGRES_URL being present
-if (process.env.POSTGRES_URL) {
+// On Vercel, it connects immediately but initialization relies on a URL being present
+if (dbUrl) {
     initializeDatabase().catch(console.error);
 }
 
