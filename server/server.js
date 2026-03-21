@@ -507,7 +507,7 @@ if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
     
     // Serve index.html for all non-API routes (SPA support)
-    app.get('*', (req, res) => {
+    app.get(/(.*)/, (req, res) => {
         if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
             res.sendFile(path.join(distPath, 'index.html'));
         }
